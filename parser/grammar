@@ -1,0 +1,97 @@
+Parser Grammar
+--------------
+
+statement:
+  expression (new-line|eof)
+
+expression:
+  variable
+  function
+  unary-expression
+  binary-expression
+  function-call-expression
+  indexing-expression
+  literal-expression
+  '(' expression ')'
+  
+unary-expression:
+  (+|-) expression
+  expression !
+  modular-expression
+  
+variable:
+  name
+  
+function:
+  variable
+  summation-or-product-function
+  set-function
+  quantification-function
+  
+summation-or-product-function: one of
+  ∑ ∏
+  
+set-function:
+  ∁
+  
+quantification-function:
+  ∀
+  (∃|∄)[!]
+  
+modular-expression:
+  | expression |
+  
+binary-expression:
+  expression (arithmetic-operator|comparison-operator|logical-operator) expression
+  assignment-expression
+  containment-expression
+  set-expression
+  
+assignment-expression:
+  variable[ '(' [variable {, variable}] ')' ] = expression
+
+containment-expression:
+  expression (⊂|⊄|⊆|⊈) expression
+  expression (∈|∉) expression
+  
+set-expression:
+  expression (∪|∩) expression
+  set-function
+  
+function-call-expression:
+  function '(' [expression {, expression}] ')'
+  
+indexing-expression:
+  expression '['expression']'
+  
+literal-expression:
+  real-number-literal
+  boolean-literal
+  set-literal
+  
+integer:
+  digit {digits}
+  
+decimal:
+  [+|-] integer ['.' integer]
+  [+|-] '.' integer
+
+real-number-literal:
+  decimal [(e|E) decimal]
+  
+boolean-literal: one of
+  true false
+  
+set-literal:
+  '{' [expression {, expression}] '}'
+  ('['|']') expression, expression ('['|']')
+  
+  
+arithmetic-operator: one of
+  + - * / % ^
+  
+comparison-operator: one of
+  == != > >= < <=
+  
+logical-operator: one of
+  && ||
