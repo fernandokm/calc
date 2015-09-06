@@ -1,0 +1,83 @@
+Lexical Grammar
+---------------
+
+expression:
+  {[token] [whitespace]}
+
+token:
+  real-number
+  operator
+  punctuation
+  name
+  new-line
+  eof
+
+digit: one of
+  0 1 2 3 4 5 6 7 8 9
+
+sign-symbol: one of
+  + -
+
+integer:
+  digit {digit}
+  
+decimal:
+  [sign-symbol] integer ['.' integer]
+  [sign-symbol] '.' integer
+ 
+exponent-symbol: one of
+  e E
+
+exponent:
+  exponent-symbol decimal
+
+real-number:
+  decimal [exponent]
+
+operator: one of
+  + - * / % ^ !
+  == != > > < <=
+  && || | =
+  ∑ (U+2211)
+  ∏ (U+220F)
+  set-operator
+  quantification-operator
+  
+set-operator:
+  ∪ (U+222A)
+  ∩ (U+2229)
+  ∁ (U+2201)
+  ⊂ (U+2282)
+  ⊄ (U+2284)
+  ⊆ (U+2286)
+  ⊈ (U+2288)
+  ∈ (U+2208)
+  ∉ (U+2209)
+  
+quantification-operator:
+  ∀ (U+2200)
+  ∃ (U+2203)
+  ∄ (U+2204)
+  ∃!
+  ∄!
+
+punctuation:
+  grouping-punctuation
+  indexing-punctuation
+  
+grouping-punctuation: one of
+  ( ) { } ,
+    
+indexing-punctuation: one of
+  . [ ]
+
+name:
+  ('_' | letter) {'_' | letter | digit}
+
+whitespace:
+  ' '
+  '\t'
+
+new-line:
+  '\r'
+  '\n'

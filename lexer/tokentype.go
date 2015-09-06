@@ -21,7 +21,7 @@ const (
 	TokenOperator
 
 	// A TokenName represents any name.
-	// A name is any sequence of unicode letters and numbers
+	// A name is any sequence of unicode letters, numbers and underscores
 	// that does not start with a number.
 	TokenName
 )

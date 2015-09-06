@@ -2,7 +2,6 @@ package lexer
 
 import (
 	"fmt"
-	"strings"
 	"unicode/utf8"
 )
 
@@ -10,11 +9,14 @@ import (
 type Lexer struct {
 	input  string
 	tokens chan *Token
+	last   *Token
 
 	start    int
 	pos      int
 	eofDepth int
 }
+
+//TODO(ferandokm): make Lexer thread-safe
 
 // NewLexer creates a new lexer from an input string.
 func NewLexer(input string) *Lexer {
@@ -25,8 +27,6 @@ func NewLexer(input string) *Lexer {
 		pos:    0,
 	}
 }
-
-// TODO(fernandokm): make next() and backoff() methods better
 
 func (l *Lexer) next() rune {
 	if l.pos >= len(l.input) {
@@ -45,12 +45,40 @@ func (l *Lexer) backoff() {
 		l.eofDepth--
 	} else {
 		l.pos--
+		for !utf8.RuneStart(l.input[l.pos]) {
+			l.pos--
+		}
 	}
 }
 
-func (l *Lexer) emit(t TokenType) {
-	l.tokens <- &Token{t, l.input[l.start:l.pos]}
+func (l *Lexer) emit(tt TokenType) {
+	t := &Token{tt, l.getCurrentValue()}
+	l.tokens <- t
+	l.last = t
 	l.setStart()
+}
+
+func (l *Lexer) lastToken() *Token {
+	return l.last
+}
+
+func (l *Lexer) lastTokenType() TokenType {
+	if l.last == nil {
+		return -1
+	}
+	fmt.Println(l.last)
+	return l.last.Type
+}
+
+func (l *Lexer) lastTokenValue() string {
+	if l.last == nil {
+		return ""
+	}
+	return l.last.Value
+}
+
+func (l *Lexer) getCurrentValue() string {
+	return l.input[l.start:l.pos]
 }
 
 func (l *Lexer) peek() rune {
@@ -69,40 +97,51 @@ func (l *Lexer) setStart() {
 }
 
 func (l *Lexer) skipWhitespace() {
-	l.acceptWhile(isWhitespace)
+	l.acceptRunes(func(r rune) bool { return is(r, whitespace) })
 	l.setStart()
 }
 
-func (l *Lexer) accept(runes string) bool {
-	if strings.IndexRune(runes, l.next()) >= 0 {
-		return true
-	}
-	l.backoff()
-	return false
-}
-
-func (l *Lexer) acceptAll(runes string) {
-	for l.accept(runes) {
-	}
-}
-
-func (l *Lexer) acceptIf(condition func(rune) bool) bool {
-	r := l.peek()
-	if condition(r) {
+func (l *Lexer) acceptRune(rules ...interface{}) bool {
+	if is(l.peek(), rules...) {
 		l.next()
 		return true
 	}
 	return false
 }
 
-func (l *Lexer) acceptWhile(condition func(rune) bool) {
-	r := l.next()
-	for condition(r) {
-		r = l.next()
+func (l *Lexer) acceptRunes(rules ...interface{}) bool {
+	if !l.acceptRune(rules...) {
+		return false
 	}
-	if r != eof {
-		l.backoff()
+	for l.acceptRune(rules...) {
 	}
+	return true
+}
+
+func (l *Lexer) acceptString(rules ...interface{}) bool {
+	length := stringRuleLength(l.input, l.pos, rules...)
+	if length == 0 {
+		return false
+	}
+	l.pos += length
+	return true
+}
+
+func (l *Lexer) acceptStrings(rules ...interface{}) bool {
+	if !l.acceptString(rules...) {
+		return false
+	}
+	for l.acceptString(rules...) {
+	}
+	return true
+}
+
+func (l *Lexer) getPos() int {
+	return l.pos
+}
+
+func (l *Lexer) restorePos(pos int) {
+	l.pos = pos
 }
 
 func (l *Lexer) errorf(format string, args ...interface{}) lexerFunc {
@@ -111,6 +150,10 @@ func (l *Lexer) errorf(format string, args ...interface{}) lexerFunc {
 		fmt.Sprintf(format, args...),
 	}
 	return nil
+}
+
+func (l *Lexer) errorExpected(what string) lexerFunc {
+	return l.errorf("Expected %s, got %q", what, l.peek())
 }
 
 // Tokens returns the token chan for this lexer.
@@ -125,7 +168,7 @@ func (l *Lexer) Input() string {
 
 // Run runs this lexer and closes the chan returned by Lexer.Tokens() when done.
 func (l *Lexer) Run() {
-	for state := lexStatement; state != nil; {
+	for state := lexExpression; state != nil; {
 		state = state(l)
 	}
 	close(l.tokens)
