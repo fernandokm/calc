@@ -23,7 +23,7 @@ func (c Context) GetVariables() map[string]Expression {
 	vars := make(map[string]Expression)
 	for k, v := range c.values {
 		if k[:prefixLength] == varPrefix {
-			vars[k] = v
+			vars[k[prefixLength:]] = v
 		}
 	}
 	return vars
@@ -34,7 +34,7 @@ func (c Context) GetConstants() map[string]Expression {
 	consts := make(map[string]Expression)
 	for k, v := range c.values {
 		if k[:prefixLength] == constPrefix {
-			consts[k] = v
+			consts[k[prefixLength:]] = v
 		}
 	}
 	return consts
@@ -95,4 +95,16 @@ func (c Context) HasVariable(name string) bool {
 func (c Context) HasConstant(name string) bool {
 	_, ok := c.values[constPrefix+name]
 	return ok
+}
+
+// Get returns the the value of a variable or constant
+// with the specified name. If no such variable or constant
+// exists, it returns an error.
+func (c Context) Get(name string) (Expression, error) {
+	if c.HasVariable(name) {
+		return c.values[varPrefix+name], nil
+	} else if c.HasConstant(name) {
+		return c.values[constPrefix+name], nil
+	}
+	return nil, errors.New("No variable or constant named " + name + ".")
 }
