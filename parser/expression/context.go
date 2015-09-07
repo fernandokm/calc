@@ -108,3 +108,27 @@ func (c Context) Get(name string) (Expression, error) {
 	}
 	return nil, errors.New("No variable or constant named " + name + ".")
 }
+
+// GetVariable returns the the value of a variable
+// with the specified name. If no such variable
+// exists, it returns an error.
+func (c Context) GetVariable(name string) (Expression, error) {
+	if c.HasVariable(name) {
+		return c.values[varPrefix+name], nil
+	} else if c.HasConstant(name) {
+		return nil, errors.New(name + " is a constant, not a variable.")
+	}
+	return nil, errors.New("No variable named " + name + ".")
+}
+
+// GetConstant returns the the value of a constant
+// with the specified name. If no such constant
+// exists, it returns an error.
+func (c Context) GetConstant(name string) (Expression, error) {
+	if c.HasConstant(name) {
+		return c.values[constPrefix+name], nil
+	} else if c.HasVariable(name) {
+		return nil, errors.New(name + " is a variable, not a constant.")
+	}
+	return nil, errors.New("No variable or constant named " + name + ".")
+}
