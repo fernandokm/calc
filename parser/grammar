@@ -6,24 +6,27 @@ statement:
 
 expression:
   variable
-  function
+  constant
   unary-expression
   binary-expression
+  assignment-expression
   function-call-expression
   indexing-expression
   literal-expression
   '(' expression ')'
   
-unary-expression:
-  (+|-) expression
-  expression !
-  modular-expression
-  
 variable:
   name
   
+constant:
+  name
+  constant-function
+  
 function:
   variable
+  constant
+  
+constant-function:
   summation-or-product-function
   set-function
   quantification-function
@@ -41,14 +44,15 @@ quantification-function:
 modular-expression:
   | expression |
   
+unary-expression:
+  (+|-) expression
+  expression !
+  modular-expression
+  
 binary-expression:
   expression (arithmetic-operator|comparison-operator|logical-operator) expression
-  assignment-expression
   containment-expression
   set-expression
-  
-assignment-expression:
-  variable[ '(' [variable {, variable}] ')' ] = expression
 
 containment-expression:
   expression (⊂|⊄|⊆|⊈) expression
@@ -56,13 +60,18 @@ containment-expression:
   
 set-expression:
   expression (∪|∩) expression
-  set-function
+  
+assignment-expression:
+  variable-declaration {, varia-or-function-declaration} = expression {, expression}
+
+variable-or-function-declaration:
+  variable [ '(' [variable {, variable}] ')' ]
   
 function-call-expression:
   function '(' [expression {, expression}] ')'
   
 indexing-expression:
-  expression '['expression']'
+  expression '['expression {, expression}']'
   
 literal-expression:
   real-number-literal
